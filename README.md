@@ -8,7 +8,7 @@ I need to periodically change avatars for my discord bots.
 I think small program that will run periodically triggered by native system timer is better than integrating this functionality in every bot.  
 
 ## Building
-Requires: `git`, `cargo`, `upx` (needed for reducing binary size)
+Requires: `git`, `cargo`
 1. `git clone https://github.com/N0D4N/discac.git`
 2. `cd discac/`
 3. `sh ./publish-x86-64-Linux.sh`
