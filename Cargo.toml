@@ -1,0 +1,20 @@
+[package]
+name = "discac"
+version = "0.1.0"
+authors = ["N0D4N"]
+edition = "2018"
+description = "Small program to change your discord bot's avatar"
+readme = "README.md"
+repository = "https://github.com/N0D4N/discac"
+license-file = "LICENSE"
+
+[profile.release]
+opt-level = 'z'  # Optimize for size.
+lto = true
+
+[dependencies]
+tokio = { version = "1.*", features = ["macros", "rt-multi-thread"] }
+serde_json = "1.*"
+serde = { version = "1.*", features = ["derive"] }
+rand = { version = "0.8", features = ["std", "std_rng"] }
+serenity = { default-features = false, features = ["http", "model", "utils", "rustls_backend"], version = "0.10" }

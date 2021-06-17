@@ -1,0 +1,4 @@
+{
+  "token": "your discord bot token",
+  "avatars_dir": "/path/to/dir/with/avatars"
+}
