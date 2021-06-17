@@ -28,6 +28,9 @@ Requires: `git`, `cargo`, `upx` (needed for reducing binary size)
 7. `sudo systemctl daemon-reload`
 8. Next command will enable timer to run `discac` every 12h, you can change it by editing `discac.timer` file   
    `sudo systemctl enable --now discac.timer`
+   
+## Contributing/Contacting
+[Open an issue](https://github.com/N0D4N/discac/issues/new)
 
 ## License
 Copyright 2021 N0D4N  
