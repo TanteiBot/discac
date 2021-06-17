@@ -1,0 +1,9 @@
+[Unit]
+Description=Service for changing discord bot avatar
+After=network.target
+
+[Service]
+Type=oneshot
+# Set working directory
+WorkingDirectory=/usr/local/bin/discac
+ExecStart=/usr/local/bin/discac/discac

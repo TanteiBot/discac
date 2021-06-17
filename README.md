@@ -17,6 +17,18 @@ Requires: `git`, `cargo`, `upx` (needed for reducing binary size)
 6. Fill `config.json` with your discord bot token and path to directory where avatar
 7. Run `./discac`
 
+## Installation
+1. `wget https://github.com/N0D4N/discac/releases/latest/download/x86-64-linux.zip`
+2. `unzip x86-64-linux.zip`
+3. Follow Building instructions 5 & 6.  
+4. You are ready to go  
+5. Follow next steps for using with systemd timer  
+   `sudo mkdir -p /usr/local/bin/discac`
+6. `sudo cp discac /usr/local/bin/discac/ && sudo cp config.json /usr/local/bin/discac/ && sudo cp systemd/discac.service /etc/systemd/system/ && sudo cp systemd/discac.timer /etc/systemd/system/`
+7. `sudo systemctl daemon-reload`
+8. Next command will enable timer to run `discac` every 12h, you can change it by editing `discac.timer` file   
+   `sudo systemctl enable --now discac.timer`
+
 ## License
 Copyright 2021 N0D4N  
 discac is licensed under the GPLv3: https://www.gnu.org/licenses/gpl-3.0.html  
