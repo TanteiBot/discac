@@ -77,7 +77,7 @@ fn get_config() -> Config {
 }
 
 async fn change_avatar(token: &String, path_to_new_avatar: &String) {
-    let http = HttpBuilder::new(&token).ratelimiter_disabled(true).await
+    let http = HttpBuilder::new(&token).await
         .expect("Couldn't' build http");
     let base64 = read_image(&path_to_new_avatar).expect("Couldn't get image");
     let mut current_user = http.get_current_user().await.expect("Couldn't get current user");
