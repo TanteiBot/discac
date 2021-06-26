@@ -18,7 +18,5 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --verbose
-    - name: Publish script test
+    - name: Build and test publish script
       run: bash ./publish-x86-64-Linux.sh 
