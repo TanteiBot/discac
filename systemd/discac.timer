@@ -3,6 +3,7 @@ Description=Change discord bot avatar every 12h
 
 [Timer]
 OnUnitActiveSec=12h
+OnUnitActiveSec=12h
 Persistent=true
 
 [Install]
