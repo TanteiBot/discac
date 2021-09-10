@@ -5,7 +5,7 @@ authors = ["N0D4N"]
 edition = "2018"
 description = "Small program to change your discord bot's avatar"
 readme = "README.md"
-repository = "https://github.com/N0D4N/discac"
+repository = "https://github.com/TanteiBot/discac"
 license-file = "LICENSE"
 
 [profile.release]
