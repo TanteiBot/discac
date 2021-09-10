@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use rand::seq::SliceRandom;
+use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_str as json_from_string, to_string_pretty as json_to_string};
 use serenity::{http::client::HttpBuilder, utils::read_image};
@@ -26,6 +26,7 @@ const DATA_FILE_NAME: &'static str = "data.json";
 #[derive(Serialize, Deserialize)]
 struct Avatars {
     avatars: Vec<String>,
+    current: String,
 }
 
 #[derive(Deserialize)]
@@ -37,30 +38,28 @@ struct Config {
 #[tokio::main]
 async fn main() {
     let config = get_config();
-    let mut pathes_to_avatars = match read_file_to_string(DATA_FILE_NAME) {
+    let mut avatars = match read_file_to_string(DATA_FILE_NAME) {
         Ok(v) => {
             let avatars: Avatars = json_from_string(&v)
                 .expect(format!("Couldn't parse {} into proper json", DATA_FILE_NAME).as_str());
             if !avatars.avatars.is_empty() {
-                avatars.avatars
+                avatars
             } else {
-                get_avatars(&config.avatars_dir)
+                get_avatars(&config.avatars_dir, avatars.current)
             }
         }
-        _ => get_avatars(&config.avatars_dir),
+        _ => get_avatars(&config.avatars_dir, String::from("")),
     };
 
-    let pth = pathes_to_avatars.pop().unwrap();
-    save_current_state(pathes_to_avatars);
+    let pth = avatars.avatars.pop().unwrap();
+    avatars.current = pth.clone();
+    save_current_state(avatars);
 
     println!("New avatar will be {}", pth);
     change_avatar(&config.token, &pth).await;
 }
 
-fn save_current_state(pathes_to_avatars: Vec<String>) {
-    let avatars = Avatars {
-        avatars: pathes_to_avatars,
-    };
+fn save_current_state(avatars: Avatars) {
     write_to_file(
         DATA_FILE_NAME,
         json_to_string(&avatars)
@@ -85,17 +84,15 @@ async fn change_avatar(token: &String, path_to_new_avatar: &String) {
         .expect("Couldn't update profile picture");
 }
 
-fn get_avatars(path: &str) -> Vec<String> {
+fn get_avatars(path: &str, current: String) -> Avatars {
     let mut avatars: Vec<String> = read_dir(path)
         .expect(format!("Couldn't read files from {} directory", path).as_str())
         .filter(|x| x.as_ref().unwrap().file_type().unwrap().is_file())
+        .map(|x| x.as_ref().unwrap().path())
         .filter(|x| {
             match x
-                .as_ref()
-                .unwrap()
-                .path()
                 .extension()
-                .unwrap()
+                .unwrap_or_default()
                 .to_str()
                 .unwrap()
             {
@@ -103,11 +100,20 @@ fn get_avatars(path: &str) -> Vec<String> {
                 _ => false,
             }
         })
-        .map(|y| String::from(y.unwrap().path().to_str().unwrap()))
+        .map(|y| String::from(y.to_str().unwrap()))
         .collect();
     if avatars.is_empty() {
         panic!("There is no jpg/png files in {} directory", path);
     }
-    avatars.shuffle(&mut rand::thread_rng());
-    avatars
+    let mut rng = thread_rng();
+    loop {
+        avatars.shuffle(&mut rng);
+        if !avatars.first().unwrap().eq(&current){
+            break;
+        }
+    }
+    Avatars{
+        avatars,
+        current
+    }
 }
