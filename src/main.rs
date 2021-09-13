@@ -102,8 +102,8 @@ fn get_avatars(path: &str, current: String) -> Avatars {
         })
         .map(|y| String::from(y.to_str().unwrap()))
         .collect();
-    if avatars.is_empty() {
-        panic!("There is no jpg/png files in {} directory", path);
+    if avatars.len() < 2 {
+        panic!("There must be 2 or more jpg/png files in {} directory to make use of discac utility", path);
     }
     let mut rng = thread_rng();
     loop {
