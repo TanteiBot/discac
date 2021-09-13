@@ -14,68 +14,95 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#![deny(
+clippy::all,
+clippy::pedantic,
+clippy::nursery,
+clippy::cargo,
+non_ascii_idents,
+unsafe_code,
+unused_crate_dependencies,
+unused_extern_crates,
+unused_import_braces,
+unused_lifetimes,
+unused_results,
+)]
+#![allow(
+clippy::multiple_crate_versions,
+clippy::semicolon_if_nothing_returned,
+clippy::cargo_common_metadata,
+)]
+
 use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
-use serde_json::{from_str as json_from_string, to_string_pretty as json_to_string};
+use serde_json::{to_string_pretty as json_to_string, from_reader as json_from_reader};
 use serenity::{http::client::HttpBuilder, utils::read_image};
-use std::fs::{read_dir, read_to_string as read_file_to_string, write as write_to_file};
+use std::fs::{read_dir, write as write_to_file, File};
+use std::io::BufReader;
+use std::path::Path;
 
-const CONFIG_FILE_NAME: &'static str = "config.json";
-const DATA_FILE_NAME: &'static str = "data.json";
+const CONFIG_FILE_NAME: &str = "config.json";
+const DATA_FILE_NAME: &str = "data.json";
 
 #[derive(Serialize, Deserialize)]
 struct Avatars {
+    /// Vec of pathes to avatars
     avatars: Vec<String>,
+    /// Path to avatar currently being in use
     current: String,
 }
 
 #[derive(Deserialize)]
 struct Config {
+    /// Token of your Discord bot
     token: String,
+    /// Path to directory with avatars in it
     avatars_dir: String,
 }
 
 #[tokio::main]
 async fn main() {
     let config = get_config();
-    let mut avatars = match read_file_to_string(DATA_FILE_NAME) {
-        Ok(v) => {
-            let avatars: Avatars = json_from_string(&v)
-                .expect(format!("Couldn't parse {} into proper json", DATA_FILE_NAME).as_str());
-            if !avatars.avatars.is_empty() {
-                avatars
-            } else {
-                get_avatars(&config.avatars_dir, avatars.current)
-            }
-        }
-        _ => get_avatars(&config.avatars_dir, String::from("")),
-    };
+    let mut avatars = get_current_state(&config);
 
-    let pth = avatars.avatars.pop().unwrap();
-    avatars.current = pth.clone();
-    save_current_state(avatars);
+    avatars.current = avatars.avatars.pop().unwrap();
+    save_current_state(&avatars);
 
-    println!("New avatar will be {}", pth);
-    change_avatar(&config.token, &pth).await;
+    println!("New avatar will be {}", avatars.current);
+    change_avatar(&config.token, &avatars.current).await;
 }
 
-fn save_current_state(avatars: Avatars) {
+#[inline]
+fn save_current_state(avatars: &Avatars) {
     write_to_file(
         DATA_FILE_NAME,
-        json_to_string(&avatars)
-            .expect(format!("Couldn't convert {:?} into proper json", &avatars.avatars).as_str()),
+        json_to_string(avatars)
+            .unwrap_or_else(|_| panic!("Couldn't convert {:?} into proper json", avatars.avatars)),
     )
-    .expect(format!("Couldn't write data file to {}", DATA_FILE_NAME).as_str());
+    .unwrap_or_else(|_| panic!("Couldn't write data file to {}", DATA_FILE_NAME));
 }
 
+#[inline]
+fn get_current_state(config: &Config) -> Avatars {
+    if Path::new(DATA_FILE_NAME).exists(){
+        let avatars: Avatars = json_from_file(DATA_FILE_NAME);
+        if avatars.avatars.is_empty() {
+            get_avatars(&config.avatars_dir, avatars.current)
+        } else {
+            avatars
+        }
+    }
+    else {
+        get_avatars(&config.avatars_dir, String::from(""))
+    }
+}
+
+#[inline]
 fn get_config() -> Config {
-    let config_str = read_file_to_string(CONFIG_FILE_NAME)
-        .expect(format!("Couldn't read {} file to string", CONFIG_FILE_NAME).as_str());
-    json_from_string(&config_str)
-        .expect(format!("Couldn't parse {} into proper json", CONFIG_FILE_NAME).as_str())
+    json_from_file(CONFIG_FILE_NAME)
 }
 
-async fn change_avatar(token: &String, path_to_new_avatar: &String) {
+async fn change_avatar(token: &str, path_to_new_avatar: &str) {
     let http = HttpBuilder::new(&token).await
         .expect("Couldn't' build http");
     let base64 = read_image(&path_to_new_avatar).expect("Couldn't get image");
@@ -86,20 +113,14 @@ async fn change_avatar(token: &String, path_to_new_avatar: &String) {
 
 fn get_avatars(path: &str, current: String) -> Avatars {
     let mut avatars: Vec<String> = read_dir(path)
-        .expect(format!("Couldn't read files from {} directory", path).as_str())
+        .unwrap_or_else(|_| panic!("Couldn't read files from {} directory", path))
         .filter(|x| x.as_ref().unwrap().file_type().unwrap().is_file())
         .map(|x| x.as_ref().unwrap().path())
-        .filter(|x| {
-            match x
-                .extension()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap()
-            {
-                "jpg" | "png" => true,
-                _ => false,
-            }
-        })
+        .filter(|x| matches!(x
+                                    .extension()
+                                    .unwrap_or_default()
+                                    .to_str()
+                                    .unwrap(), "jpg" | "png"))
         .map(|y| String::from(y.to_str().unwrap()))
         .collect();
     if avatars.len() < 2 {
@@ -116,4 +137,13 @@ fn get_avatars(path: &str, current: String) -> Avatars {
         avatars,
         current
     }
+}
+
+fn json_from_file<T>(path: &str) -> T
+    where T: serde::de::DeserializeOwned, {
+    json_from_reader(
+        BufReader::new(
+            File::open(path)
+                .unwrap_or_else(|_| panic!("Couldn't open {} file", path)))
+    ).unwrap_or_else(|_| panic!("Couldn't parse {} as json", path))
 }
