@@ -15,27 +15,27 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #![deny(
-clippy::all,
-clippy::pedantic,
-clippy::nursery,
-clippy::cargo,
-non_ascii_idents,
-unsafe_code,
-unused_crate_dependencies,
-unused_extern_crates,
-unused_import_braces,
-unused_lifetimes,
-unused_results,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    non_ascii_idents,
+    unsafe_code,
+    unused_crate_dependencies,
+    unused_extern_crates,
+    unused_import_braces,
+    unused_lifetimes,
+    unused_results
 )]
 #![allow(
-clippy::multiple_crate_versions,
-clippy::semicolon_if_nothing_returned,
-clippy::cargo_common_metadata,
+    clippy::multiple_crate_versions,
+    clippy::semicolon_if_nothing_returned,
+    clippy::cargo_common_metadata
 )]
 
 use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
-use serde_json::{to_string_pretty as json_to_string, from_reader as json_from_reader};
+use serde_json::{from_reader as json_from_reader, to_string_pretty as json_to_string};
 use serenity::{http::client::HttpBuilder, utils::read_image};
 use std::fs::{read_dir, write as write_to_file, File};
 use std::io::BufReader;
@@ -84,15 +84,14 @@ fn save_current_state(avatars: &Avatars) {
 
 #[inline]
 fn get_current_state(config: &Config) -> Avatars {
-    if Path::new(DATA_FILE_NAME).exists(){
+    if Path::new(DATA_FILE_NAME).exists() {
         let avatars: Avatars = json_from_file(DATA_FILE_NAME);
         if avatars.avatars.is_empty() {
             get_avatars(&config.avatars_dir, avatars.current)
         } else {
             avatars
         }
-    }
-    else {
+    } else {
         get_avatars(&config.avatars_dir, String::from(""))
     }
 }
@@ -103,11 +102,17 @@ fn get_config() -> Config {
 }
 
 async fn change_avatar(token: &str, path_to_new_avatar: &str) {
-    let http = HttpBuilder::new(&token).await
+    let http = HttpBuilder::new(&token)
+        .await
         .expect("Couldn't' build http");
     let base64 = read_image(&path_to_new_avatar).expect("Couldn't get image");
-    let mut current_user = http.get_current_user().await.expect("Couldn't get current user");
-    current_user.edit(http, |p| p.avatar(Some(&base64))).await
+    let mut current_user = http
+        .get_current_user()
+        .await
+        .expect("Couldn't get current user");
+    current_user
+        .edit(http, |p| p.avatar(Some(&base64)))
+        .await
         .expect("Couldn't update profile picture");
 }
 
@@ -116,34 +121,36 @@ fn get_avatars(path: &str, current: String) -> Avatars {
         .unwrap_or_else(|_| panic!("Couldn't read files from {} directory", path))
         .filter(|x| x.as_ref().unwrap().file_type().unwrap().is_file())
         .map(|x| x.as_ref().unwrap().path())
-        .filter(|x| matches!(x
-                                    .extension()
-                                    .unwrap_or_default()
-                                    .to_str()
-                                    .unwrap(), "jpg" | "png"))
+        .filter(|x| {
+            matches!(
+                x.extension().unwrap_or_default().to_str().unwrap(),
+                "jpg" | "png"
+            )
+        })
         .map(|y| String::from(y.to_str().unwrap()))
         .collect();
     if avatars.len() < 2 {
-        panic!("There must be 2 or more jpg/png files in {} directory to make use of discac utility", path);
+        panic!(
+            "There must be 2 or more jpg/png files in {} directory to make use of discac utility",
+            path
+        );
     }
     let mut rng = thread_rng();
     loop {
         avatars.shuffle(&mut rng);
-        if !avatars.first().unwrap().eq(&current){
+        if !avatars.first().unwrap().eq(&current) {
             break;
         }
     }
-    Avatars{
-        avatars,
-        current
-    }
+    Avatars { avatars, current }
 }
 
 fn json_from_file<T>(path: &str) -> T
-    where T: serde::de::DeserializeOwned, {
-    json_from_reader(
-        BufReader::new(
-            File::open(path)
-                .unwrap_or_else(|_| panic!("Couldn't open {} file", path)))
-    ).unwrap_or_else(|_| panic!("Couldn't parse {} as json", path))
+where
+    T: serde::de::DeserializeOwned,
+{
+    json_from_reader(BufReader::new(
+        File::open(path).unwrap_or_else(|_| panic!("Couldn't open {} file", path)),
+    ))
+    .unwrap_or_else(|_| panic!("Couldn't parse {} as json", path))
 }
