@@ -60,7 +60,7 @@ struct Config {
 	avatars_dir: String,
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() {
 	let config = get_config();
 	let mut avatars = get_current_state(&config);
