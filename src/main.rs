@@ -65,7 +65,7 @@ async fn main() {
 	let config = get_config();
 	let mut avatars = get_current_state(&config);
 
-	avatars.current = avatars.avatars.pop().unwrap();
+	avatars.current = avatars.avatars.remove(0);
 	save_current_state(&avatars);
 
 	println!("New avatar will be {}", avatars.current);
