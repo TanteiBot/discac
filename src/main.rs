@@ -37,7 +37,7 @@ use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_reader as json_from_reader, to_string_pretty as json_to_string};
 use serenity::{http::client::HttpBuilder, utils::read_image};
-use std::fs::{read_dir, write as write_to_file, File};
+use std::fs::{canonicalize as to_absolute_path, read_dir, write as write_to_file, File};
 use std::io::BufReader;
 use std::path::Path;
 
@@ -127,7 +127,19 @@ fn get_avatars(path: &str, current: String) -> Avatars {
 				"jpg" | "png"
 			)
 		})
-		.map(|y| String::from(y.to_str().unwrap()))
+		.map(|y| {
+			String::from(
+				to_absolute_path(&y)
+					.unwrap_or_else(|_| {
+						panic!(
+							"Couldn't convert \"{}\" to absolute path",
+							y.to_str().unwrap()
+						)
+					})
+					.to_str()
+					.unwrap(),
+			)
+		})
 		.collect();
 	if avatars.len() < 2 {
 		panic!(
