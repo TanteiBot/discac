@@ -28,7 +28,10 @@ jobs:
       run: shellcheck --severity=style build.sh publish.sh publish-x86-64-Linux.sh
 
     - name: Run clippy checks
-      run: cargo clippy --release -- -D warnings
+      uses: actions-rs/clippy-check@v1
+      with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --release -- -D warnings
 
     - name: Build and test publish script
       run: bash ./publish-x86-64-Linux.sh
