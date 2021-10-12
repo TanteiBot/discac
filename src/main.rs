@@ -49,7 +49,7 @@ struct Avatars {
 	/// Vec of pathes to avatars
 	avatars: Vec<String>,
 	/// Path to avatar currently being in use
-	current: String,
+	current: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -65,11 +65,11 @@ async fn main() {
 	let config = get_config();
 	let mut avatars = get_current_state(&config);
 
-	avatars.current = avatars.avatars.remove(0);
+	avatars.current = Option::Some(avatars.avatars.remove(0));
 	save_current_state(&avatars);
 
-	println!("New avatar will be {}", avatars.current);
-	change_avatar(&config.token, &avatars.current).await;
+	println!("New avatar will be {}", avatars.current.as_ref().unwrap());
+	change_avatar(&config.token, &avatars.current.unwrap()).await;
 }
 
 #[inline]
@@ -83,21 +83,32 @@ fn save_current_state(avatars: &Avatars) {
 }
 
 #[inline]
-fn get_current_state(config: &Config) -> Avatars {
+fn get_current_state(config: &Config) -> Box<Avatars> {
 	if Path::new(DATA_FILE_NAME).exists() {
-		let avatars: Avatars = json_from_file(DATA_FILE_NAME);
+		let mut avatars: Box<Avatars> = json_from_file(DATA_FILE_NAME);
 		if avatars.avatars.is_empty() {
-			get_avatars(&config.avatars_dir, avatars.current)
-		} else {
-			avatars
+			avatars.avatars = get_avatars(&config.avatars_dir);
+			let mut rng = thread_rng();
+			let default = &String::default();
+			let current = &avatars.current.as_deref().unwrap_or(default);
+			loop {
+				avatars.avatars.shuffle(&mut rng);
+				if !avatars.avatars.first().unwrap().eq(current) {
+					break;
+				}
+			}
 		}
+		avatars
 	} else {
-		get_avatars(&config.avatars_dir, String::from(""))
+		Box::<Avatars>::new(Avatars {
+			avatars: get_avatars(&config.avatars_dir),
+			current: Option::None,
+		})
 	}
 }
 
 #[inline]
-fn get_config() -> Config {
+fn get_config() -> Box<Config> {
 	json_from_file(CONFIG_FILE_NAME)
 }
 
@@ -116,8 +127,8 @@ async fn change_avatar(token: &str, path_to_new_avatar: &str) {
 		.expect("Couldn't update profile picture");
 }
 
-fn get_avatars(path: &str, current: String) -> Avatars {
-	let mut avatars: Vec<String> = read_dir(path)
+fn get_avatars(path: &str) -> Vec<String> {
+	let avatars: Vec<String> = read_dir(path)
 		.unwrap_or_else(|_| panic!("Couldn't read files from {} directory", path))
 		.filter(|x| x.as_ref().unwrap().file_type().unwrap().is_file())
 		.map(|x| x.as_ref().unwrap().path())
@@ -147,14 +158,7 @@ fn get_avatars(path: &str, current: String) -> Avatars {
 			path
 		);
 	}
-	let mut rng = thread_rng();
-	loop {
-		avatars.shuffle(&mut rng);
-		if !avatars.first().unwrap().eq(&current) {
-			break;
-		}
-	}
-	Avatars { avatars, current }
+	avatars
 }
 
 fn json_from_file<T>(path: &str) -> T
