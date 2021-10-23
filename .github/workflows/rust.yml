@@ -17,15 +17,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    
+    - name: Cache rust dependencies and build results
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/
+          ~/.cargo/registry/
+          ~/.cargo/git/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
 
-    - name: Install rustfmt and clippy
-      run: rustup component add rustfmt clippy
-
-    - name: Run rustfmt
-      run: cargo fmt --all -- --check
-
-    - name: Run shellcheck
-      run: shellcheck --severity=style build.sh publish.sh publish-x86-64-Linux.sh
+    - name: Install rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: stable
+          components: clippy
 
     - name: Run clippy checks
       uses: actions-rs/clippy-check@v1
