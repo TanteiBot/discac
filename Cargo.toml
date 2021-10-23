@@ -2,7 +2,7 @@
 name = "discac"
 version = "0.4.0"
 authors = ["N0D4N"]
-edition = "2018"
+edition = "2021"
 description = "Small program to change your discord bot's avatar"
 readme = "README.md"
 repository = "https://github.com/TanteiBot/discac"
