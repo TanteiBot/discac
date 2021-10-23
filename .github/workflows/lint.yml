@@ -1,0 +1,30 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Run rustfmt
+      run: cargo fmt --all -- --check
+
+    - name: Run shellcheck
+      uses: reviewdog/action-shellcheck@v1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        reporter: github-pr-review 
+        pattern: "*.sh" # Optional.
+        exclude: "./.git/*"
+        shellcheck_flags: --severity=style --external-sources
+        fail_on_error: true
