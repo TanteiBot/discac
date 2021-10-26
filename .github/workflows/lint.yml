@@ -1,13 +1,10 @@
-name: Rust
+name: Lint
 
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-
-env:
-  CARGO_TERM_COLOR: always
 
 jobs:
   lint:
@@ -16,21 +13,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
-    - name: Install rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-          toolchain: stable
-          components: rustfmt
-    
-    - name: Run rustfmt
-      run: cargo fmt --all -- --check
-
-    - name: Run shellcheck
-      uses: reviewdog/action-shellcheck@v1
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        reporter: github-pr-review 
-        pattern: "*.sh" # Optional.
-        exclude: "./.git/*"
-        shellcheck_flags: --severity=style --external-sources
-        fail_on_error: true
+    - name: Lint Code Base
+      uses: github/super-linter@v4
+      env:
+        VALIDATE_ALL_CODEBASE: false
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
