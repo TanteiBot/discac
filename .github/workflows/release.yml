@@ -1,0 +1,33 @@
+---
+name: Release
+
+on:
+    release:
+        types: [ published ]
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  ref: ${{ github.sha }}
+
+            - name: Setup rust
+              uses: ./.github/actions/setup-rust
+              with:
+                  toolchain: stable
+                  should-cache-be-loaded: true
+
+            - name: Run packing script
+              run: ./scripts/pack.sh
+
+            - name: Add asset to release
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: ./x86_64-linux.zip
+                  asset_content_type: application/zip
