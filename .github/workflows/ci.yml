@@ -1,0 +1,77 @@
+---
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup rust
+      uses: ./.github/actions/setup-rust
+      with:
+          toolchain: stable
+          should-cache-be-loaded: true
+
+    - name: Build and test publish script
+      run: bash ./publish-x86-64-Linux.sh
+
+  clippy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup rust
+        uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          components: clippy
+          should-cache-be-loaded: true
+
+      - name: Run clippy checks
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --release -- -D warnings
+
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup rust
+        uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          components: rustfmt
+          should-cache-be-loaded: false
+
+      - name: Run rustfmt
+        run: cargo fmt --all -- --check
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Lint Code Base
+      uses: github/super-linter/slim@v4
+      env:
+        VALIDATE_ALL_CODEBASE: false
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VALIDATE_EDITORCONFIG: false
+
