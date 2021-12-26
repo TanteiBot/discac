@@ -61,7 +61,7 @@ struct Config {
 	/// Token of your Discord bot
 	token: String,
 	/// Path to directory with avatars in it
-	avatars_dir: String,
+	avatars_dirs: Vec<String>,
 }
 
 struct Pathes {
@@ -144,7 +144,7 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Box<Avatars> {
 	if path_to_data.exists() {
 		let mut avatars: Box<Avatars> = json_from_file(path_to_data);
 		if avatars.avatars.is_empty() {
-			avatars.avatars = get_avatars(&config.avatars_dir);
+			avatars.avatars = get_avatars(&config.avatars_dirs);
 			let mut rng = thread_rng();
 			let default = &String::default();
 			let current = &avatars.current.as_deref().unwrap_or(default);
@@ -159,7 +159,7 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Box<Avatars> {
 	} else {
 		println!("File with data doesn't exist");
 		Box::<Avatars>::new(Avatars {
-			avatars: get_avatars(&config.avatars_dir),
+			avatars: get_avatars(&config.avatars_dirs),
 			current: Option::None,
 		})
 	}
@@ -184,35 +184,39 @@ async fn change_avatar(token: &str, path_to_new_avatar: &str) {
 		.expect("Couldn't update profile picture");
 }
 
-fn get_avatars(path: &str) -> Vec<String> {
-	let avatars: Vec<String> = read_dir(path)
-		.unwrap_or_else(|_| panic!("Couldn't read files from {} directory", path))
-		.filter(|x| x.as_ref().unwrap().file_type().unwrap().is_file())
-		.map(|x| x.as_ref().unwrap().path())
-		.filter(|x| {
-			matches!(
-				x.extension().unwrap_or_default().to_str().unwrap(),
-				"jpg" | "png"
-			)
-		})
-		.map(|y| {
-			String::from(
-				to_absolute_path(&y)
-					.unwrap_or_else(|_| {
-						panic!(
-							"Couldn't convert \"{}\" to absolute path",
-							y.to_str().unwrap()
-						)
-					})
-					.to_str()
-					.unwrap(),
-			)
-		})
-		.collect();
+fn get_avatars(pathes: &[String]) -> Vec<String> {
+	let mut avatars: Vec<String> = Vec::default();
+	for path in pathes {
+		avatars.extend(
+			read_dir(path)
+				.unwrap_or_else(|_| panic!("Couldn't read files from {} directory", path))
+				.filter(|x| x.as_ref().unwrap().file_type().unwrap().is_file())
+				.map(|x| x.as_ref().unwrap().path())
+				.filter(|x| {
+					matches!(
+						x.extension().unwrap_or_default().to_str().unwrap(),
+						"jpg" | "png"
+					)
+				})
+				.map(|y| {
+					String::from(
+						to_absolute_path(&y)
+							.unwrap_or_else(|_| {
+								panic!(
+									"Couldn't convert \"{}\" to absolute path",
+									y.to_str().unwrap()
+								)
+							})
+							.to_str()
+							.unwrap(),
+					)
+				}),
+		);
+	}
 	if avatars.len() < 2 {
 		panic!(
-			"There must be 2 or more jpg/png files in {} directory to make use of discac utility",
-			path
+			"There must be 2 or more jpg/png files in {} directory/ies to make use of discac utility",
+			pathes.join(",")
 		);
 	}
 	avatars
