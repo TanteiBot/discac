@@ -184,7 +184,7 @@ async fn change_avatar(token: &str, path_to_new_avatar: &str) {
 		.expect("Couldn't update profile picture");
 }
 
-fn get_avatars(pathes: &Vec<String>) -> Vec<String> {
+fn get_avatars(pathes: &[String]) -> Vec<String> {
 	let mut avatars: Vec<String> = Vec::default();
 	for path in pathes {
 		avatars.extend(
