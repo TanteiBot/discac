@@ -1,9 +1,35 @@
 [Unit]
-Description=Service for changing discord bot avatar
-After=network.target
+Description=Service for changing Discord bot avatar
+After=network-online.target
 
 [Service]
 Type=oneshot
+
 # Set working directory
 WorkingDirectory=/usr/local/bin/discac
 ExecStart=/usr/local/bin/discac/discac
+
+# Set to another value if executable is installed in another path
+# Value should be ExecStart value minus discac at the end
+ExecPaths=/usr/local/bin/discac %i
+
+Environment=DISCAC_PROFILES_DIR=/usr/local/bin/discac/profiles
+# Must be the same as value of env var above
+ReadWritePaths=/usr/local/bin/discac/profiles
+
+# Uncomment and set value to directories where avatars for profiles are located if they are not under ReadWritePaths value
+# ReadOnlyPaths=
+
+# Sandboxing
+PrivateTmp=yes
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+PrivateDevices=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+MemoryDenyWriteExecute=yes
