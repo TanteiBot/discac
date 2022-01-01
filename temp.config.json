@@ -1,4 +1,5 @@
 {
-  "token": "your discord bot token",
-  "avatars_dirs": [ "/path/to/dir/with/avatars", "/path/to/another/dir/with/avatars/" ]
+	"token": "your discord bot token",
+	"avatars_dirs": [ "/path/to/dir/with/avatars", "/path/to/another/dir/with/avatars/" ],
+	"should_get_avatars_from_subdirectories": false
 }
