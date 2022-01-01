@@ -36,7 +36,8 @@
 use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_reader as json_from_reader, to_string_pretty as json_to_string};
-use serenity::{http::client::HttpBuilder, utils::read_image};
+use serenity::{http::client::Http, utils::read_image};
+use std::collections::VecDeque;
 use std::env;
 use std::ffi::OsStr;
 use std::fs::{canonicalize as to_absolute_path, read_dir, write as write_to_file, File};
@@ -60,8 +61,11 @@ struct Avatars {
 struct Config {
 	/// Token of your Discord bot
 	token: String,
-	/// Path to directory with avatars in it
+	/// Path to directories with avatars in it
 	avatars_dirs: Vec<String>,
+	/// Should avatars be fetched from subdirectories of directories specified in `avatars_dirs`
+	#[serde(default = "bool::default")]
+	should_get_avatars_from_subdirectories: bool,
 }
 
 struct Pathes {
@@ -144,7 +148,10 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Box<Avatars> {
 	if path_to_data.exists() {
 		let mut avatars: Box<Avatars> = json_from_file(path_to_data);
 		if avatars.avatars.is_empty() {
-			avatars.avatars = get_avatars(&config.avatars_dirs);
+			avatars.avatars = get_avatars(
+				&config.avatars_dirs,
+				config.should_get_avatars_from_subdirectories,
+			);
 			let mut rng = thread_rng();
 			let default = &String::default();
 			let current = &avatars.current.as_deref().unwrap_or(default);
@@ -159,7 +166,10 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Box<Avatars> {
 	} else {
 		println!("File with data doesn't exist");
 		Box::<Avatars>::new(Avatars {
-			avatars: get_avatars(&config.avatars_dirs),
+			avatars: get_avatars(
+				&config.avatars_dirs,
+				config.should_get_avatars_from_subdirectories,
+			),
 			current: Option::None,
 		})
 	}
@@ -170,9 +180,7 @@ fn get_config(path_to_config: &Path) -> Box<Config> {
 }
 
 async fn change_avatar(token: &str, path_to_new_avatar: &str) {
-	let http = HttpBuilder::new(&token)
-		.await
-		.expect("Couldn't' build http");
+	let http = Http::new_with_token(token);
 	let base64 = read_image(&path_to_new_avatar).expect("Couldn't get image");
 	let mut current_user = http
 		.get_current_user()
@@ -184,34 +192,66 @@ async fn change_avatar(token: &str, path_to_new_avatar: &str) {
 		.expect("Couldn't update profile picture");
 }
 
-fn get_avatars(pathes: &[String]) -> Vec<String> {
+fn get_avatars(pathes: &[String], should_read_from_subdirs: bool) -> Vec<String> {
+	assert!(
+		!pathes.is_empty(),
+		"There must be more than 0 pathes to directory/ies with avatars"
+	);
+	let mut pathes_to_traverse: VecDeque<String> = VecDeque::with_capacity(pathes.len());
+	pathes_to_traverse.extend(pathes.to_owned());
+
 	let mut avatars: Vec<String> = Vec::default();
-	for path in pathes {
-		avatars.extend(
-			read_dir(path)
-				.unwrap_or_else(|_| panic!("Couldn't read files from {} directory", path))
-				.filter(|x| x.as_ref().unwrap().file_type().unwrap().is_file())
-				.map(|x| x.as_ref().unwrap().path())
-				.filter(|x| {
+	loop {
+		let option = pathes_to_traverse.pop_front();
+		if option.is_none() {
+			break;
+		}
+		let path = option.unwrap();
+		for path in read_dir(path)
+			.expect("Couldn't read files from directory")
+			.filter_map(|x| {
+				let val = x.as_ref().unwrap().file_type().unwrap();
+				if val.is_dir() {
+					Some((x, true))
+				} else if val.is_file() {
+					Some((x, false))
+				} else {
+					None
+				}
+			})
+			.map(|x| (x.0.as_ref().unwrap().path(), x.1))
+			.filter(|x| {
+				if x.1 {
+					true
+				} else {
 					matches!(
-						x.extension().unwrap_or_default().to_str().unwrap(),
+						x.0.extension().unwrap_or_default().to_str().unwrap(),
 						"jpg" | "png"
 					)
-				})
-				.map(|y| {
+				}
+			})
+			.map(|y| {
+				(
 					String::from(
-						to_absolute_path(&y)
+						to_absolute_path(&y.0)
 							.unwrap_or_else(|_| {
 								panic!(
 									"Couldn't convert \"{}\" to absolute path",
-									y.to_str().unwrap()
+									y.0.to_str().unwrap()
 								)
 							})
 							.to_str()
 							.unwrap(),
-					)
-				}),
-		);
+					),
+					y.1,
+				)
+			}) {
+			if path.1 && should_read_from_subdirs {
+				pathes_to_traverse.push_back(path.0);
+			} else {
+				avatars.push(path.0);
+			}
+		}
 	}
 	if avatars.len() < 2 {
 		panic!(
