@@ -148,7 +148,10 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Box<Avatars> {
 	if path_to_data.exists() {
 		let mut avatars: Box<Avatars> = json_from_file(path_to_data);
 		if avatars.avatars.is_empty() {
-			avatars.avatars = get_avatars(&config.avatars_dirs, config.should_get_avatars_from_subdirectories);
+			avatars.avatars = get_avatars(
+				&config.avatars_dirs,
+				config.should_get_avatars_from_subdirectories,
+			);
 			let mut rng = thread_rng();
 			let default = &String::default();
 			let current = &avatars.current.as_deref().unwrap_or(default);
@@ -163,7 +166,10 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Box<Avatars> {
 	} else {
 		println!("File with data doesn't exist");
 		Box::<Avatars>::new(Avatars {
-			avatars: get_avatars(&config.avatars_dirs, config.should_get_avatars_from_subdirectories),
+			avatars: get_avatars(
+				&config.avatars_dirs,
+				config.should_get_avatars_from_subdirectories,
+			),
 			current: Option::None,
 		})
 	}
@@ -187,7 +193,10 @@ async fn change_avatar(token: &str, path_to_new_avatar: &str) {
 }
 
 fn get_avatars(pathes: &[String], should_read_from_subdirs: bool) -> Vec<String> {
-	assert!(!pathes.is_empty(), "There must be more than 0 pathes to directory/ies with avatars");
+	assert!(
+		!pathes.is_empty(),
+		"There must be more than 0 pathes to directory/ies with avatars"
+	);
 	let mut pathes_to_traverse: VecDeque<String> = VecDeque::with_capacity(pathes.len());
 	pathes_to_traverse.extend(pathes.to_owned());
 
@@ -239,8 +248,7 @@ fn get_avatars(pathes: &[String], should_read_from_subdirs: bool) -> Vec<String>
 			}) {
 			if path.1 && should_read_from_subdirs {
 				pathes_to_traverse.push_back(path.0);
-			}
-			else{
+			} else {
 				avatars.push(path.0);
 			}
 		}
