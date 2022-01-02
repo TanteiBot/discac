@@ -7,24 +7,12 @@ Type=oneshot
 
 # Set working directory
 WorkingDirectory=/usr/local/bin/discac
-ExecStart=/usr/local/bin/discac/discac
-
-# Set to another value if executable is installed in another path
-# Value should be ExecStart value minus discac at the end
-ExecPaths=/usr/local/bin/discac %i
-
+ExecStart=/usr/local/bin/discac/discac %i
 Environment=DISCAC_PROFILES_DIR=/usr/local/bin/discac/profiles
-# Must be the same as value of env var above
-ReadWritePaths=/usr/local/bin/discac/profiles
-
-# Uncomment and set value to directories where avatars for profiles are located if they are not under ReadWritePaths value
-# ReadOnlyPaths=
 
 # Sandboxing
 PrivateTmp=yes
 NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectKernelLogs=true
