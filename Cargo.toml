@@ -10,7 +10,7 @@ license-file = "LICENSE"
 
 [profile.release]
 opt-level = 'z'  # Optimize for size.
-lto = "thin"
+lto = true
 panic = "abort"
 incremental = true
 # strip = true
