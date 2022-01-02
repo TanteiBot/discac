@@ -80,10 +80,10 @@ async fn main() {
 	let mut avatars = get_current_state(&config, &pathes.path_to_data);
 
 	avatars.current = Option::Some(avatars.avatars.remove(0));
-	save_current_state(&avatars, &pathes.path_to_data);
 
 	println!("New avatar will be {}", avatars.current.as_ref().unwrap());
-	change_avatar(&config.token, &avatars.current.unwrap()).await;
+	change_avatar(&config.token, avatars.current.as_ref().unwrap()).await;
+	save_current_state(&avatars, &pathes.path_to_data);
 }
 
 fn save_current_state(avatars: &Avatars, path_to_data: &Path) {
