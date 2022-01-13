@@ -36,7 +36,7 @@
 use std::collections::VecDeque;
 use std::env;
 use std::ffi::OsStr;
-use std::fs::{canonicalize as to_absolute_path, File, read_dir, write as write_to_file};
+use std::fs::{canonicalize as to_absolute_path, read_dir, write as write_to_file, File};
 use std::io::BufReader;
 use std::path::Path;
 
