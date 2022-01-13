@@ -42,8 +42,7 @@ use std::env;
 use std::ffi::OsStr;
 use std::fs::{canonicalize as to_absolute_path, read_dir, write as write_to_file, File};
 use std::io::BufReader;
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
+use std::path::Path;
 
 const CONFIG_FILE_NAME: &str = "config.json";
 const DATA_FILE_NAME: &str = "data.json";
@@ -128,15 +127,13 @@ fn get_dir_with_data_and_config() -> Box<OsStr> {
 		);
 		let profile_name = &env::args().nth(1).expect("Can't get name of profile");
 
-		let path_to_dir_with_data_and_config = Box::<OsStr>::from(
-			env::join_paths([dir_with_profiles.to_str().unwrap(), profile_name.as_str()]).unwrap(),
-		);
+		let path_to_dir_with_data_and_config = get_joined_path(&[dir_with_profiles.as_os_str(), OsStr::new(profile_name)]);
 		assert!(
-			Path::new(&path_to_dir_with_data_and_config).is_dir(),
+			&path_to_dir_with_data_and_config.is_dir(),
 			"{}",
 			format!("{:?} isn't a directory", &path_to_dir_with_data_and_config)
 		);
-		path_to_dir_with_data_and_config
+		Box::from(path_to_dir_with_data_and_config.as_os_str())
 	} else {
 		println!("Environment variable \"{0}\" not set, assuming single profile mode, where \"{1}\" and \"{2}\" are located in the same directory as \"discac\" executable", FOLDER_WITH_PROFILES_ENV_VAR_NAME, DATA_FILE_NAME, CONFIG_FILE_NAME);
 		let current_dir = env::current_dir().expect("Couldn't get current dir");
@@ -267,19 +264,12 @@ where
 	T: serde::de::DeserializeOwned,
 {
 	json_from_reader(BufReader::new(
-		File::open(path).unwrap_or_else(|_| panic!("Couldn't open {:?} file", path)),
+		File::open(path).unwrap_or_else(|_| panic!("Couldn't open {:?} file", to_absolute_path(path).unwrap())),
 	))
 	.unwrap_or_else(|_| panic!("Couldn't parse {:?} as json", path))
 }
 
-fn get_joined_path(arr: &[Box<OsStr>; 2]) -> Box<Path> {
-	Box::<Path>::from(
-		PathBuf::from_str(
-			env::join_paths(arr)
-				.expect("Couldn't join pathes")
-				.to_str()
-				.expect("Couldn't transform os-specific string to str"),
-		)
-		.unwrap(),
-	)
+fn get_joined_path<T>(arr: &[T; 2]) -> Box<Path>
+where T: AsRef<OsStr>{
+	Box::<Path>::from(Path::join(Path::new(&arr[0]), Path::new(&arr[1])))
 }
