@@ -76,6 +76,7 @@ struct Pathes {
 async fn main() {
 	let pathes = get_config_and_data_path();
 	let config = get_config(&pathes.path_to_config);
+
 	let mut avatars = get_current_state(&config, &pathes.path_to_data);
 
 	avatars.current = Option::Some(avatars.avatars.remove(0));
@@ -88,10 +89,19 @@ async fn main() {
 fn save_current_state(avatars: &Avatars, path_to_data: &Path) {
 	write_to_file(
 		path_to_data,
-		json_to_string(avatars)
-			.unwrap_or_else(|e| panic!("Couldn't convert {:?} into proper json. Error message: {}", avatars.avatars, e)),
+		json_to_string(avatars).unwrap_or_else(|e| {
+			panic!(
+				"Couldn't convert {:?} into proper json. Error message: {}",
+				avatars.avatars, e
+			)
+		}),
 	)
-	.unwrap_or_else(|e| panic!("Couldn't write data file to {:?}. Error message: {}", path_to_data, e));
+	.unwrap_or_else(|e| {
+		panic!(
+			"Couldn't write data file to {:?}. Error message: {}",
+			path_to_data, e
+		)
+	});
 }
 
 fn get_config_and_data_path() -> Box<Pathes> {
@@ -127,7 +137,8 @@ fn get_dir_with_data_and_config() -> Box<OsStr> {
 		);
 		let profile_name = &env::args().nth(1).expect("Can't get name of profile");
 
-		let path_to_dir_with_data_and_config = get_joined_path(&[dir_with_profiles.as_os_str(), OsStr::new(profile_name)]);
+		let path_to_dir_with_data_and_config =
+			get_joined_path(&[dir_with_profiles.as_os_str(), OsStr::new(profile_name)]);
 		assert!(
 			&path_to_dir_with_data_and_config.is_dir(),
 			"{}",
@@ -234,7 +245,8 @@ fn get_avatars(pathes: &[String], should_read_from_subdirs: bool) -> Vec<String>
 							.unwrap_or_else(|e| {
 								panic!(
 									"Couldn't convert \"{}\" to absolute path. Error message: {}",
-									y.0.to_str().unwrap(), e
+									y.0.to_str().unwrap(),
+									e
 								)
 							})
 							.to_str()
@@ -263,13 +275,19 @@ fn json_from_file<T>(path: &Path) -> T
 where
 	T: serde::de::DeserializeOwned,
 {
-	json_from_reader(BufReader::new(
-		File::open(path).unwrap_or_else(|e| panic!("Couldn't open {:?} file. Error message: {}", to_absolute_path(path).unwrap(), e)),
-	))
+	json_from_reader(BufReader::new(File::open(path).unwrap_or_else(|e| {
+		panic!(
+			"Couldn't open {:?} file. Error message: {}",
+			to_absolute_path(path).unwrap(),
+			e
+		)
+	})))
 	.unwrap_or_else(|e| panic!("Couldn't parse {:?} as json.  Error message: {}", path, e))
 }
 
 fn get_joined_path<T>(arr: &[T; 2]) -> Box<Path>
-where T: AsRef<OsStr>{
+where
+	T: AsRef<OsStr>,
+{
 	Box::<Path>::from(Path::join(Path::new(&arr[0]), Path::new(&arr[1])))
 }
