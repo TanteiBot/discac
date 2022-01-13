@@ -1,6 +1,6 @@
 [package]
 name = "discac"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["N0D4N"]
 edition = "2021"
 description = "Small program to change your discord bot's avatar"

@@ -1,5 +1,5 @@
 // discac - small program to change your Discord bot's avatar
-// Copyright (C) 2021 N0D4N
+// Copyright (C) 2021-2022 N0D4N
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -33,16 +33,17 @@
 	clippy::cargo_common_metadata
 )]
 
-use rand::{seq::SliceRandom, thread_rng};
-use serde::{Deserialize, Serialize};
-use serde_json::{from_reader as json_from_reader, to_string_pretty as json_to_string};
-use serenity::{http::client::Http, utils::read_image};
 use std::collections::VecDeque;
 use std::env;
 use std::ffi::OsStr;
 use std::fs::{canonicalize as to_absolute_path, read_dir, write as write_to_file, File};
 use std::io::BufReader;
 use std::path::Path;
+
+use rand::{seq::SliceRandom, thread_rng};
+use serde::{Deserialize, Serialize};
+use serde_json::{from_reader as json_from_reader, to_string_pretty as json_to_string};
+use serenity::{http::client::Http, utils::read_image};
 
 const CONFIG_FILE_NAME: &str = "config.json";
 const DATA_FILE_NAME: &str = "data.json";
