@@ -35,6 +35,6 @@ Requires `wget`
 
 ## License
 Copyright 2021-2022 N0D4N  
-discac is licensed under the GPLv3: <https://www.gnu.org/licenses/gpl-3.0.html>  
+discac is licensed under the GPLv3: <https://www.gnu.org/licenses/gpl-3.0>  
 See <https://github.com/TanteiBot/discac/blob/master/LICENSE> for more details.  
 [![License](https://www.gnu.org/graphics/gplv3-127x51.png)](https://www.gnu.org/licenses/gpl-3.0.html)
