@@ -1,0 +1,10 @@
+[Unit]
+Description=Change discord bot avatar every 12h
+
+[Timer]
+OnBootSec=12h
+OnUnitActiveSec=12h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
