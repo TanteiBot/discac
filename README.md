@@ -16,8 +16,8 @@ Requires: `git`, `cargo`
 
 ## Installation and running, currently supported only on x86-64 Linux with GNU libc
 Requires `wget`  
-1. `wget https://github.com/N0D4N/discac/releases/latest/download/x86-64-linux.zip`
-2. `unzip x86-64-linux.zip`
+1. `wget https://github.com/N0D4N/discac/releases/latest/download/x86_64-linux.zip`
+2. `unzip x86_64-linux.zip`
 3. Fill your bot token and paths to directories where bot's avatars are located to `temp.config.json`
 4. Rename `temp.config.json` to `config.json`
 5. You are ready to go  
