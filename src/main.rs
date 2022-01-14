@@ -35,8 +35,7 @@
 
 use std::collections::VecDeque;
 use std::env;
-use std::ffi::OsStr;
-use std::fs::{canonicalize as to_absolute_path, read_dir, write as write_to_file, File};
+use std::fs::{canonicalize as to_absolute_path, File, read_dir, write as write_to_file};
 use std::io::BufReader;
 use std::path::Path;
 
@@ -68,6 +67,12 @@ struct Config {
 	should_get_avatars_from_subdirectories: bool,
 }
 
+impl Config {
+	fn from_file(path_to_config: &Path) -> Box<Self> {
+		json_from_file(path_to_config)
+	}
+}
+
 struct Pathes {
 	path_to_config: Box<Path>,
 	path_to_data: Box<Path>,
@@ -76,7 +81,7 @@ struct Pathes {
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
 	let pathes = get_config_and_data_path();
-	let config = get_config(&pathes.path_to_config);
+	let config = Config::from_file(&pathes.path_to_config);
 
 	let mut avatars = get_current_state(&config, &pathes.path_to_data);
 
@@ -92,40 +97,31 @@ fn save_current_state(avatars: &Avatars, path_to_data: &Path) {
 		path_to_data,
 		json_to_string(avatars).unwrap_or_else(|e| {
 			panic!(
-				"Couldn't convert {:?} into proper json. Error message: {}",
-				avatars.avatars, e
+				"Couldn't convert {:?} into proper json. Error message: {e}",
+				avatars.avatars
 			)
 		}),
 	)
-	.unwrap_or_else(|e| {
-		panic!(
-			"Couldn't write data file to {:?}. Error message: {}",
-			path_to_data, e
-		)
-	});
+	.unwrap_or_else(|e| panic!("Couldn't write data file to {path_to_data:?}. Error message: {e}"));
 }
 
 fn get_config_and_data_path() -> Box<Pathes> {
 	let dir_with_data_and_config = get_dir_with_data_and_config();
-	let mut vec = [
-		dir_with_data_and_config,
-		Box::<OsStr>::from(DATA_FILE_NAME.as_ref()),
-	];
-	let path_to_data = get_joined_path(&vec);
-	vec[1] = Box::<OsStr>::from(CONFIG_FILE_NAME.as_ref());
-	let path_to_config = get_joined_path(&vec);
-	assert!(
-		path_to_config.is_file(),
-		"{}",
-		format!("{:?} isn't a file", path_to_config)
-	);
+	let path_to_data = dir_with_data_and_config
+		.join(DATA_FILE_NAME)
+		.into_boxed_path();
+
+	let path_to_config = dir_with_data_and_config
+		.join(CONFIG_FILE_NAME)
+		.into_boxed_path();
+	assert!(path_to_config.is_file(), "{path_to_config:?} isn't a file");
 	Box::<Pathes>::new(Pathes {
 		path_to_config,
 		path_to_data,
 	})
 }
 
-fn get_dir_with_data_and_config() -> Box<OsStr> {
+fn get_dir_with_data_and_config() -> Box<Path> {
 	if let Ok(val) = env::var(FOLDER_WITH_PROFILES_ENV_VAR_NAME) {
 		let dir_with_profiles = Path::new(&val);
 		assert!(
@@ -139,17 +135,17 @@ fn get_dir_with_data_and_config() -> Box<OsStr> {
 		let profile_name = &env::args().nth(1).expect("Can't get name of profile");
 
 		let path_to_dir_with_data_and_config =
-			get_joined_path(&[dir_with_profiles.as_os_str(), OsStr::new(profile_name)]);
+			dir_with_profiles.join(profile_name).into_boxed_path();
 		assert!(
 			&path_to_dir_with_data_and_config.is_dir(),
 			"{}",
-			format!("{:?} isn't a directory", &path_to_dir_with_data_and_config)
+			format!("{path_to_dir_with_data_and_config:?} isn't a directory")
 		);
-		Box::from(path_to_dir_with_data_and_config.as_os_str())
+		path_to_dir_with_data_and_config
 	} else {
-		println!("Environment variable \"{0}\" not set, assuming single profile mode, where \"{1}\" and \"{2}\" are located in the same directory as \"discac\" executable", FOLDER_WITH_PROFILES_ENV_VAR_NAME, DATA_FILE_NAME, CONFIG_FILE_NAME);
+		println!("Environment variable \"{FOLDER_WITH_PROFILES_ENV_VAR_NAME}\" not set, assuming single profile mode, where \"{DATA_FILE_NAME}\" and \"{CONFIG_FILE_NAME}\" are located in the same directory as \"discac\" executable");
 		let current_dir = env::current_dir().expect("Couldn't get current dir");
-		Box::<OsStr>::from(current_dir.as_os_str())
+		current_dir.into_boxed_path()
 	}
 }
 
@@ -182,10 +178,6 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Box<Avatars> {
 			current: Option::None,
 		})
 	}
-}
-
-fn get_config(path_to_config: &Path) -> Box<Config> {
-	json_from_file(path_to_config)
 }
 
 async fn change_avatar(token: &str, path_to_new_avatar: &str) {
@@ -245,9 +237,8 @@ fn get_avatars(pathes: &[String], should_read_from_subdirs: bool) -> Vec<String>
 						to_absolute_path(&y.0)
 							.unwrap_or_else(|e| {
 								panic!(
-									"Couldn't convert \"{}\" to absolute path. Error message: {}",
-									y.0.to_str().unwrap(),
-									e
+									"Couldn't convert \"{}\" to absolute path. Error message: {e}",
+									y.0.to_str().unwrap()
 								)
 							})
 							.to_str()
@@ -263,12 +254,11 @@ fn get_avatars(pathes: &[String], should_read_from_subdirs: bool) -> Vec<String>
 			}
 		}
 	}
-	if avatars.len() < 2 {
-		panic!(
-			"There must be 2 or more jpg/png files in {} directory/ies to make use of discac utility",
-			pathes.join(",")
-		);
-	}
+	assert!(
+		!(avatars.len() < 2),
+		"There must be 2 or more jpg/png files in {} directory/ies to make use of discac utility",
+		pathes.join(",")
+	);
 	avatars
 }
 
@@ -278,17 +268,9 @@ where
 {
 	json_from_reader(BufReader::new(File::open(path).unwrap_or_else(|e| {
 		panic!(
-			"Couldn't open {:?} file. Error message: {}",
-			to_absolute_path(path).unwrap(),
-			e
+			"Couldn't open {:?} file. Error message: {e}",
+			to_absolute_path(path).unwrap()
 		)
 	})))
-	.unwrap_or_else(|e| panic!("Couldn't parse {:?} as json.  Error message: {}", path, e))
-}
-
-fn get_joined_path<T>(arr: &[T; 2]) -> Box<Path>
-where
-	T: AsRef<OsStr>,
-{
-	Box::<Path>::from(Path::join(Path::new(&arr[0]), Path::new(&arr[1])))
+	.unwrap_or_else(|e| panic!("Couldn't parse {path:?} as json.  Error message: {e}"))
 }
