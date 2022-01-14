@@ -37,7 +37,7 @@ use std::collections::VecDeque;
 use std::env;
 use std::fs::{canonicalize as to_absolute_path, read_dir, write as write_to_file};
 use std::io::BufReader;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
@@ -68,14 +68,14 @@ struct Config {
 }
 
 impl Config {
-	fn from_file(path_to_config: &Path) -> Box<Self> {
+	fn from_file(path_to_config: &Path) -> Self {
 		json_from_file(path_to_config)
 	}
 }
 
 struct Pathes {
-	path_to_config: Box<Path>,
-	path_to_data: Box<Path>,
+	path_to_config: PathBuf,
+	path_to_data: PathBuf,
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -105,27 +105,23 @@ fn save_current_state(avatars: &Avatars, path_to_data: &Path) {
 	.unwrap_or_else(|e| panic!("Couldn't write data file to {path_to_data:?}. Error message: {e}"));
 }
 
-fn get_config_and_data_path() -> Box<Pathes> {
+fn get_config_and_data_path() -> Pathes {
 	let dir_with_data_and_config = get_dir_with_data_and_config();
-	let path_to_data = dir_with_data_and_config
-		.join(DATA_FILE_NAME)
-		.into_boxed_path();
+	let path_to_data = dir_with_data_and_config.join(DATA_FILE_NAME);
 
-	let path_to_config = dir_with_data_and_config
-		.join(CONFIG_FILE_NAME)
-		.into_boxed_path();
+	let path_to_config = dir_with_data_and_config.join(CONFIG_FILE_NAME);
 	assert!(
 		path_to_config.is_file(),
 		"{}",
 		format!("{path_to_config:?} isn't a file")
 	);
-	Box::<Pathes>::new(Pathes {
+	Pathes {
 		path_to_config,
 		path_to_data,
-	})
+	}
 }
 
-fn get_dir_with_data_and_config() -> Box<Path> {
+fn get_dir_with_data_and_config() -> PathBuf {
 	if let Ok(val) = env::var(FOLDER_WITH_PROFILES_ENV_VAR_NAME) {
 		let dir_with_profiles = Path::new(&val);
 		assert!(
@@ -138,8 +134,7 @@ fn get_dir_with_data_and_config() -> Box<Path> {
 		);
 		let profile_name = &env::args().nth(1).expect("Can't get name of profile");
 
-		let path_to_dir_with_data_and_config =
-			dir_with_profiles.join(profile_name).into_boxed_path();
+		let path_to_dir_with_data_and_config = dir_with_profiles.join(profile_name);
 		assert!(
 			&path_to_dir_with_data_and_config.is_dir(),
 			"{}",
@@ -148,14 +143,13 @@ fn get_dir_with_data_and_config() -> Box<Path> {
 		path_to_dir_with_data_and_config
 	} else {
 		println!("Environment variable \"{FOLDER_WITH_PROFILES_ENV_VAR_NAME}\" not set, assuming single profile mode, where \"{DATA_FILE_NAME}\" and \"{CONFIG_FILE_NAME}\" are located in the same directory as \"discac\" executable");
-		let current_dir = env::current_dir().expect("Couldn't get current dir");
-		current_dir.into_boxed_path()
+		env::current_dir().expect("Couldn't get current dir")
 	}
 }
 
-fn get_current_state(config: &Config, path_to_data: &Path) -> Box<Avatars> {
+fn get_current_state(config: &Config, path_to_data: &Path) -> Avatars {
 	if path_to_data.exists() {
-		let mut avatars: Box<Avatars> = json_from_file(path_to_data);
+		let mut avatars: Avatars = json_from_file(path_to_data);
 		if avatars.avatars.is_empty() {
 			avatars.avatars = get_avatars(
 				&config.avatars_dirs,
@@ -174,13 +168,13 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Box<Avatars> {
 		avatars
 	} else {
 		println!("File with data doesn't exist");
-		Box::<Avatars>::new(Avatars {
+		Avatars {
 			avatars: get_avatars(
 				&config.avatars_dirs,
 				config.should_get_avatars_from_subdirectories,
 			),
 			current: Option::None,
-		})
+		}
 	}
 }
 
