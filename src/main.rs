@@ -35,7 +35,7 @@
 
 use std::collections::VecDeque;
 use std::env;
-use std::fs::{canonicalize as to_absolute_path, File, read_dir, write as write_to_file};
+use std::fs::{canonicalize as to_absolute_path, read_dir, write as write_to_file};
 use std::io::BufReader;
 use std::path::Path;
 
@@ -114,7 +114,11 @@ fn get_config_and_data_path() -> Box<Pathes> {
 	let path_to_config = dir_with_data_and_config
 		.join(CONFIG_FILE_NAME)
 		.into_boxed_path();
-	assert!(path_to_config.is_file(), "{path_to_config:?} isn't a file");
+	assert!(
+		path_to_config.is_file(),
+		"{}",
+		format!("{path_to_config:?} isn't a file")
+	);
 	Box::<Pathes>::new(Pathes {
 		path_to_config,
 		path_to_data,
@@ -159,7 +163,7 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Box<Avatars> {
 			);
 			let mut rng = thread_rng();
 			let default = &String::default();
-			let current = &avatars.current.as_deref().unwrap_or(default);
+			let current = avatars.current.as_deref().unwrap_or(default);
 			loop {
 				avatars.avatars.shuffle(&mut rng);
 				if !avatars.avatars.first().unwrap().eq(current) {
@@ -255,7 +259,7 @@ fn get_avatars(pathes: &[String], should_read_from_subdirs: bool) -> Vec<String>
 		}
 	}
 	assert!(
-		!(avatars.len() < 2),
+		avatars.len() >= 2,
 		"There must be 2 or more jpg/png files in {} directory/ies to make use of discac utility",
 		pathes.join(",")
 	);
@@ -266,11 +270,13 @@ fn json_from_file<T>(path: &Path) -> T
 where
 	T: serde::de::DeserializeOwned,
 {
-	json_from_reader(BufReader::new(File::open(path).unwrap_or_else(|e| {
-		panic!(
-			"Couldn't open {:?} file. Error message: {e}",
-			to_absolute_path(path).unwrap()
-		)
-	})))
+	json_from_reader(BufReader::new(std::fs::File::open(path).unwrap_or_else(
+		|e| {
+			panic!(
+				"Couldn't open {:?} file. Error message: {e}",
+				to_absolute_path(path).unwrap()
+			)
+		},
+	)))
 	.unwrap_or_else(|e| panic!("Couldn't parse {path:?} as json.  Error message: {e}"))
 }
