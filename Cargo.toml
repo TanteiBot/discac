@@ -16,8 +16,8 @@ incremental = true
 # strip = true
 
 [dependencies]
-tokio = { version = "1.*", features = ["macros", "rt"] }
-serde_json = "1.*"
-serde = { version = "1.*", features = ["derive"] }
-rand = { version = "0.8", features = ["std", "std_rng"] }
-serenity = { default-features = false, features = ["http", "model", "utils", "rustls_backend"], version = "0.10" }
+tokio = { version = "*", features = ["macros", "rt"] }
+serde_json = "*"
+serde = { version = "*", features = ["derive"] }
+rand = { version = "*", features = ["std", "std_rng"] }
+serenity = { default-features = false, features = ["http", "model", "utils", "rustls_backend"], version = "*" }
