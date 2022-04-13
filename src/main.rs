@@ -29,7 +29,7 @@
 )]
 #![allow(
 	clippy::multiple_crate_versions,
-	clippy::semicolon_if_nothing_returned,
+	clippy::wildcard_dependencies,
 	clippy::cargo_common_metadata
 )]
 
