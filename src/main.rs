@@ -179,7 +179,7 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Avatars {
 }
 
 async fn change_avatar(token: &str, path_to_new_avatar: &str) {
-	let http = Http::new_with_token(token);
+	let http = Http::new(token);
 	let base64 = read_image(&path_to_new_avatar).expect("Couldn't get image");
 	let mut current_user = http
 		.get_current_user()
