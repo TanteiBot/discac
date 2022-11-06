@@ -122,7 +122,10 @@ fn get_config_and_data_path() -> Pathes {
 }
 
 fn get_dir_with_data_and_config() -> PathBuf {
-	if let Ok(val) = env::var(FOLDER_WITH_PROFILES_ENV_VAR_NAME) {
+	env::var(FOLDER_WITH_PROFILES_ENV_VAR_NAME).map_or_else(|_| {
+		println!("Environment variable \"{FOLDER_WITH_PROFILES_ENV_VAR_NAME}\" not set, assuming single profile mode, where \"{DATA_FILE_NAME}\" and \"{CONFIG_FILE_NAME}\" are located in the same directory as \"discac\" executable");
+		env::current_dir().expect("Couldn't get current dir")
+	}, |val| {
 		let dir_with_profiles = Path::new(&val);
 		assert!(
 			dir_with_profiles.is_dir(),
@@ -141,10 +144,7 @@ fn get_dir_with_data_and_config() -> PathBuf {
 			format!("{path_to_dir_with_data_and_config:?} isn't a directory")
 		);
 		path_to_dir_with_data_and_config
-	} else {
-		println!("Environment variable \"{FOLDER_WITH_PROFILES_ENV_VAR_NAME}\" not set, assuming single profile mode, where \"{DATA_FILE_NAME}\" and \"{CONFIG_FILE_NAME}\" are located in the same directory as \"discac\" executable");
-		env::current_dir().expect("Couldn't get current dir")
-	}
+	} )
 }
 
 fn get_current_state(config: &Config, path_to_data: &Path) -> Avatars {
@@ -180,7 +180,7 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Avatars {
 
 async fn change_avatar(token: &str, path_to_new_avatar: &str) {
 	let http = Http::new(token);
-	let base64 = read_image(&path_to_new_avatar).expect("Couldn't get image");
+	let base64 = read_image(path_to_new_avatar).expect("Couldn't get image");
 	let mut current_user = http
 		.get_current_user()
 		.await
