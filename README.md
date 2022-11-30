@@ -25,7 +25,7 @@ Requires `wget`
 1. `sudo mkdir -p /usr/local/bin/discac`
 2. Choose a name for a profile. `discac` supports updating profiles of multiple bots with one executable. For differentiating between them profiles are used.
 3. Copy next command and replace first `profile_name` at its start with name of profile you have chosen earlier.
-4. `DISCAC_PROFILE_NAME=profile_name sudo mkdir -p /usr/local/bin/discac/profiles/"$DISCAC_PROFILE_NAME" && sudo cp config.json /usr/local/bin/discac/profiles/"$DISCAC_PROFILE_NAME" && sudo cp discac /usr/local/bin/discac/ && sudo cp -r systemd/* /etc/systemd/system/`
+4. `(export DISCAC_PROFILE_NAME=profile_name ; sudo mkdir -p /usr/local/bin/discac/profiles/"$DISCAC_PROFILE_NAME" && sudo cp config.json /usr/local/bin/discac/profiles/"$DISCAC_PROFILE_NAME" && sudo cp discac /usr/local/bin/discac/ && sudo cp -r systemd/* /etc/systemd/system/)`
 5. `sudo systemctl daemon-reload`
 6. Next command will enable timer to run `discac` every 12h, you can change it by editing `discac@.timer` file. Replace `profile_name` in it with profile name you have chosen earlier.  
    `sudo systemctl enable --now discac@profile_name.timer`
