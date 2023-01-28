@@ -131,8 +131,7 @@ fn get_dir_with_data_and_config() -> PathBuf {
 			dir_with_profiles.is_dir(),
 			"{}",
 			format!(
-				"Value of {} environment variable isn't a directory",
-				FOLDER_WITH_PROFILES_ENV_VAR_NAME
+				"Value of {FOLDER_WITH_PROFILES_ENV_VAR_NAME} environment variable isn't a directory"
 			)
 		);
 		let profile_name = &env::args().nth(1).expect("Can't get name of profile");
