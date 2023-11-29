@@ -42,7 +42,7 @@ use std::path::{Path, PathBuf};
 use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_reader as json_from_reader, to_string_pretty as json_to_string};
-use serenity::{http::client::Http, utils::read_image};
+use serenity::{http::Http, utils::read_image};
 
 const CONFIG_FILE_NAME: &str = "config.json";
 const DATA_FILE_NAME: &str = "data.json";
