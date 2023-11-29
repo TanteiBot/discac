@@ -42,7 +42,7 @@ use std::path::{Path, PathBuf};
 use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_reader as json_from_reader, to_string_pretty as json_to_string};
-use serenity::{http::Http, builder::CreateAttachment, builder::EditProfile};
+use serenity::{builder::CreateAttachment, builder::EditProfile, http::Http};
 
 const CONFIG_FILE_NAME: &str = "config.json";
 const DATA_FILE_NAME: &str = "data.json";
@@ -179,7 +179,9 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Avatars {
 
 async fn change_avatar(token: &str, path_to_new_avatar: &str) {
 	let http = Http::new(token);
-	let base64 = CreateAttachment::path(path_to_new_avatar).await.expect("Couldn't get image");
+	let base64 = CreateAttachment::path(path_to_new_avatar)
+		.await
+		.expect("Couldn't get image");
 	let mut current_user = http
 		.get_current_user()
 		.await
