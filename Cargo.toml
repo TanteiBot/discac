@@ -15,7 +15,7 @@ panic = "abort"
 incremental = true
 
 [dependencies]
-tokio = { version = "1.35.1", features = ["macros", "rt"] }
+tokio = { version = "1.36.0", features = ["macros", "rt"] }
 serde_json = "1.0.113"
 serde = { version = "1.0.196", features = ["derive"] }
 rand = { version = "0.8.5", features = ["std", "std_rng"] }
