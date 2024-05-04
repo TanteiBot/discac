@@ -1,6 +1,15 @@
 ---
 name: CI
 
+permissions:
+  actions: write
+  checks: write
+  contents: write
+  id-token: write
+  pull-requests: write
+  security-events: write
+  statuses: write
+
 on:
   push:
     branches: [ master ]
@@ -74,7 +83,7 @@ jobs:
           fetch-depth: 0
 
     - name: Lint Code Base
-      uses: github/super-linter@v5
+      uses: github/super-linter@v6
       env:
         VALIDATE_ALL_CODEBASE: false
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
