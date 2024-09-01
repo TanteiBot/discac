@@ -2,89 +2,86 @@
 name: CI
 
 permissions:
-  actions: write
-  checks: write
-  contents: write
-  id-token: write
-  pull-requests: write
-  security-events: write
-  statuses: write
+    actions: write
+    checks: write
+    contents: write
+    id-token: write
+    pull-requests: write
+    security-events: write
+    statuses: write
 
 on:
-  push:
-    branches: [ master ]
+    push:
+        branches: [master]
 
-  pull_request:
-    branches: [ master ]
+    pull_request:
+        branches: [master]
 
 env:
-  CARGO_TERM_COLOR: always
+    CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v4
+        steps:
+            - uses: actions/checkout@v4
 
-    - name: Setup rust
-      uses: ./.github/actions/setup-rust
-      with:
-          toolchain: stable
-          should-cache-be-loaded: true
+            - name: Setup rust
+              uses: ./.github/actions/setup-rust
+              with:
+                  toolchain: stable
+                  should-cache-be-loaded: true
 
-    - name: Build and test publish script
-      run: ./scripts/publish-x86-64-Linux.sh
-      shell: bash
+            - name: Build and test publish script
+              run: ./scripts/publish-x86-64-Linux.sh
+              shell: bash
 
-  clippy:
-    runs-on: ubuntu-latest
+    clippy:
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+        steps:
+            - uses: actions/checkout@v4
 
-      - name: Setup rust
-        uses: ./.github/actions/setup-rust
-        with:
-          toolchain: stable
-          components: clippy
-          should-cache-be-loaded: true
+            - name: Setup rust
+              uses: ./.github/actions/setup-rust
+              with:
+                  toolchain: stable
+                  components: clippy
+                  should-cache-be-loaded: true
 
-      - name: Run clippy checks
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --release -- -D warnings
+            - name: Run Clippy
+              run: cargo clippy --all-targets --all-features
 
-  format:
-    runs-on: ubuntu-latest
+    format:
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+        steps:
+            - uses: actions/checkout@v4
 
-      - name: Setup rust
-        uses: ./.github/actions/setup-rust
-        with:
-          toolchain: stable
-          components: rustfmt
-          should-cache-be-loaded: false
+            - name: Setup rust
+              uses: ./.github/actions/setup-rust
+              with:
+                  toolchain: stable
+                  components: rustfmt
+                  should-cache-be-loaded: false
 
-      - name: Run rustfmt
-        run: cargo fmt --all -- --check
+            - name: Run rustfmt
+              run: cargo fmt --all -- --check
 
-  lint:
-    runs-on: ubuntu-latest
+    lint:
+        runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v4
-      with:
-          # super-linter needs the full git history to get the
-          # list of files that changed across commits
-          fetch-depth: 0
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  # super-linter needs the full git history to get the
+                  # list of files that changed across commits
+                  fetch-depth: 0
 
-    - name: Lint Code Base
-      uses: github/super-linter@v6
-      env:
-        VALIDATE_ALL_CODEBASE: false
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        VALIDATE_EDITORCONFIG: false
+            - name: Lint Code Base
+              uses: github/super-linter@v7
+              env:
+                  VALIDATE_ALL_CODEBASE: false
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  VALIDATE_EDITORCONFIG: false

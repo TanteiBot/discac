@@ -1,33 +1,34 @@
 ---
 name: Setup rusr
+description: Setups rust on a runner
 
 inputs:
-  toolchain:
-    required: true
-  
-  components:
-    required: false
+    toolchain:
+        required: true
 
-  should-cache-be-loaded:
-    required: true
+    components:
+        required: false
+
+    should-cache-be-loaded:
+        required: true
 
 runs:
-  using: composite
-  steps:
-    - name: Cache rust dependencies and build results
-      if: ${{ inputs.should-cache-be-loaded == 'true' }}
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/
-          ~/.cargo/registry/
-          ~/.cargo/git/
-          target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+    using: composite
+    steps:
+        - name: Cache rust dependencies and build results
+          if: ${{ inputs.should-cache-be-loaded == 'true' }}
+          uses: actions/cache@v2
+          with:
+              path: |
+                  ~/.cargo/bin/
+                  ~/.cargo/registry/
+                  ~/.cargo/registry/
+                  ~/.cargo/git/
+                  target/
+              key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
 
-    - name: Install rust
-      uses: actions-rs/toolchain@v1
-      with:
-          toolchain: ${{ inputs.toolchain }}
-          components: ${{ inputs.components }}
+        - name: Install rust
+          uses: actions-rs/toolchain@v1
+          with:
+              toolchain: ${{ inputs.toolchain }}
+              components: ${{ inputs.components }}
