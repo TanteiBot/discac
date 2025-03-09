@@ -17,7 +17,7 @@ runs:
     steps:
         - name: Cache rust dependencies and build results
           if: ${{ inputs.should-cache-be-loaded == 'true' }}
-          uses: actions/cache@v2
+          uses: actions/cache@v4
           with:
               path: |
                   ~/.cargo/bin/
