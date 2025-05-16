@@ -39,7 +39,7 @@ use std::fs::{canonicalize as to_absolute_path, read_dir, write as write_to_file
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{rng, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_reader as json_from_reader, to_string_pretty as json_to_string};
 use serenity::{builder::CreateAttachment, builder::EditProfile, http::Http};
@@ -102,7 +102,12 @@ fn save_current_state(avatars: &Avatars, path_to_data: &Path) {
 			)
 		}),
 	)
-	.unwrap_or_else(|e| panic!("Couldn't write data file to {path_to_data:?}. Error message: {e}"));
+	.unwrap_or_else(|e| {
+		panic!(
+			"Couldn't write data file to {}. Error message: {e}",
+			path_to_data.display()
+		)
+	});
 }
 
 fn get_config_and_data_path() -> Pathes {
@@ -113,7 +118,7 @@ fn get_config_and_data_path() -> Pathes {
 	assert!(
 		path_to_config.is_file(),
 		"{}",
-		format!("{path_to_config:?} isn't a file")
+		format!("{} isn't a file", path_to_config.display())
 	);
 	Pathes {
 		path_to_config,
@@ -140,7 +145,7 @@ fn get_dir_with_data_and_config() -> PathBuf {
 		assert!(
 			&path_to_dir_with_data_and_config.is_dir(),
 			"{}",
-			format!("{path_to_dir_with_data_and_config:?} isn't a directory")
+			format!("{} isn't a directory", path_to_dir_with_data_and_config.display())
 		);
 		path_to_dir_with_data_and_config
 	} )
@@ -154,7 +159,7 @@ fn get_current_state(config: &Config, path_to_data: &Path) -> Avatars {
 				&config.avatars_dirs,
 				config.should_get_avatars_from_subdirectories,
 			);
-			let mut rng = thread_rng();
+			let mut rng = rng();
 			let default = &String::default();
 			let current = avatars.current.as_deref().unwrap_or(default);
 			loop {
@@ -269,9 +274,14 @@ where
 		|e| {
 			panic!(
 				"Couldn't open {:?} file. Error message: {e}",
-				to_absolute_path(path).unwrap()
+				to_absolute_path(path).unwrap().display()
 			)
 		},
 	)))
-	.unwrap_or_else(|e| panic!("Couldn't parse {path:?} as json.  Error message: {e}"))
+	.unwrap_or_else(|e| {
+		panic!(
+			"Couldn't parse {} as json.  Error message: {e}",
+			path.display()
+		)
+	})
 }
