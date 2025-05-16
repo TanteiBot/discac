@@ -278,5 +278,10 @@ where
 			)
 		},
 	)))
-	.unwrap_or_else(|e| panic!("Couldn't parse {} as json.  Error message: {e}", path.display()))
+	.unwrap_or_else(|e| {
+		panic!(
+			"Couldn't parse {} as json.  Error message: {e}",
+			path.display()
+		)
+	})
 }
