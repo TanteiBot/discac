@@ -18,5 +18,5 @@ incremental = true
 tokio = { version = "1.50.0", features = ["macros", "rt"] }
 serde_json = "1.0.149"
 serde = { version = "1.0.228", features = ["derive"] }
-rand = { version = "0.9.2", features = ["std", "std_rng"] }
+rand = { version = "0.9.3", features = ["std", "std_rng"] }
 serenity = { default-features = false, features = ["http", "model", "utils", "rustls_backend"], version = "0.12.5" }
